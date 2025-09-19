@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solicitação de Melhorias - Prefeitura de Mãe do Rio - PA</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    /* Cabeçalho em azul */
+    .card-header {
+      background: linear-gradient(45deg, #007bff, #0056b3);
+      color: white;
+      border-radius: 15px 15px 0 0 !important;
+      text-align: center;
+      padding: 2rem;
+    }
+    .form-control, .form-select {
+      border-radius: 10px;
+      border: 2px solid #e9ecef;
+      padding: 12px 15px;
+      transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+    .form-check-input:checked {
+      background-color: #007bff; /* azul */
+      border-color: #007bff;
+    }
+    /* Botão primário azul */
+    .btn-primary {
+      background: linear-gradient(45deg, #007bff, #0056b3);
+      border: none;
+      border-radius: 10px;
+      padding: 12px 30px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,123,255,0.4);
+    }
+    .alert {
+      border-radius: 10px;
+      border: none;
+    }
+    /* Logo inteira (sem círculo) */
+    .brasao {
+      width: auto;
+      height: auto;
+      background: transparent;
+      border-radius: 0;
+      overflow: visible;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .brasao img {
+      width: 140px;  /* ajuste conforme necessário */
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .form-label {
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 8px;
+    }
+    .required { color: #dc3545; }
+    /* Ícones de labels em azul */
+    .text-form-primary { color: #0d6efd !important; }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-md-10">
+        <div class="card">
+          <div class="card-header">
+            <div class="brasao">
+              <!-- Logo inteira -->
+              <img src="{{ url_for('static', filename='logo_mdr.png') }}" alt="Prefeitura de Mãe do Rio - Logo">
+            </div>
+            <h2 class="mb-2">Prefeitura Municipal de Mãe do Rio - PA</h2>
+            <h4 class="mb-0">Solicitação de Melhorias Urbanas</h4>
+            <p class="mb-0 mt-2 opacity-75">Informe as necessidades de infraestrutura da sua rua</p>
+          </div>
+
+          <div class="card-body p-4">
+            <!-- Mensagens Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <!-- IMPORTANTE: enctype para upload -->
+            <form method="POST" action="{{ url_for('enviar_formulario') }}" enctype="multipart/form-data">
+              <div class="row">
+                <!-- Nome da Rua -->
+                <div class="col-md-8 mb-3">
+                  <label for="nome_rua" class="form-label">
+                    <i class="fas fa-road me-2 text-form-primary"></i>
+                    Nome da Rua <span class="required">*</span>
+                  </label>
+                  <input type="text" class="form-control" id="nome_rua" name="nome_rua" 
+                         placeholder="Ex: Rua das Flores" required>
+                </div>
+                
+                <!-- Número -->
+                <div class="col-md-4 mb-3">
+                  <label for="numero" class="form-label">
+                    <i class="fas fa-hashtag me-2 text-form-primary"></i>
+                    Número <span class="required">*</span>
+                  </label>
+                  <input type="number" class="form-control" id="numero" name="numero" 
+                         placeholder="123" min="1" required>
+                </div>
+              </div>
+
+              <!-- Bairro -->
+              <div class="mb-4">
+                <label for="bairro" class="form-label">
+                  <i class="fas fa-map-marker-alt me-2 text-form-primary"></i>
+                  Bairro <span class="required">*</span>
+                </label>
+                <input type="text" class="form-control" id="bairro" name="bairro" 
+                       placeholder="Ex: Centro" required>
+              </div>
+
+              <!-- Coordenadas (captura por GPS) -->
+              <div class="mb-4">
+                <label class="form-label">
+                  <i class="fas fa-location-crosshairs me-2 text-form-primary"></i>
+                  Coordenadas
+                </label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="coordenadas" name="coordenadas" placeholder="Lat, Lng" readonly>
+                  <button type="button" class="btn btn-outline-primary" id="btnGeo">
+                    <i class="fas fa-crosshairs me-1"></i> Capturar localização
+                  </button>
+                </div>
+                <small class="text-muted">Permita o acesso à localização quando solicitado.</small>
+
+                <!-- Campos ocultos para envio separado (recomendado) -->
+                <input type="hidden" id="lat" name="lat">
+                <input type="hidden" id="lng" name="lng">
+              </div>
+
+              <!-- Foto (captura/galeria) -->
+              <div class="mb-4">
+                <label for="foto" class="form-label">
+                  <i class="fas fa-camera me-2 text-form-primary"></i>
+                  Foto (opcional)
+                </label>
+                <input
+                  class="form-control"
+                  type="file"
+                  id="foto"
+                  name="foto"
+                  accept="image/*"
+                  capture="environment"
+                >
+                <small class="text-muted">
+                  Você pode tirar uma foto agora ou escolher da galeria. Tamanho máximo recomendado: 5MB.
+                </small>
+
+                <!-- Pré-visualização (opcional) -->
+                <div class="mt-3" id="previewWrapper" style="display:none;">
+                  <div class="border rounded p-2 text-center">
+                    <img id="previewImg" alt="Pré-visualização" style="max-width: 100%; height: auto; border-radius: 8px;" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Situação -->
+              <div class="mb-4">
+                <label class="form-label">
+                  <i class="fas fa-tools me-2 text-form-primary"></i>
+                  Situação da Rua <span class="required">*</span>
+                </label>
+                <p class="text-muted small mb-3">Selecione todas as necessidades que se aplicam:</p>
+
+                <div class="row">
+                  <div class="col-md-6 mb-2">
+                    <div class="form-check p-3 border rounded-3 h-100">
+                      <input class="form-check-input" type="checkbox" value="necessita de asfalto" 
+                             id="asfalto" name="situacao">
+                      <label class="form-check-label w-100" for="asfalto">
+                        <i class="fas fa-road me-2 text-warning"></i>
+                        <strong>Necessita de Asfalto</strong>
+                        <br><small class="text-muted">Pavimentação da via</small>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6 mb-2">
+                    <div class="form-check p-3 border rounded-3 h-100">
+                      <input class="form-check-input" type="checkbox" value="necessita de tapa buraco" 
+                             id="tapa_buraco" name="situacao">
+                      <label class="form-check-label w-100" for="tapa_buraco">
+                        <i class="fas fa-fill-drip me-2 text-danger"></i>
+                        <strong>Necessita de Tapa Buraco</strong>
+                        <br><small class="text-muted">Reparo de buracos na via</small>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6 mb-2">
+                    <div class="form-check p-3 border rounded-3 h-100">
+                      <input class="form-check-input" type="checkbox" value="necessita de iluminação" 
+                             id="iluminacao" name="situacao">
+                      <label class="form-check-label w-100" for="iluminacao">
+                        <i class="fas fa-lightbulb me-2 text-info"></i>
+                        <strong>Necessita de Iluminação</strong>
+                        <br><small class="text-muted">Instalação ou reparo de postes</small>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6 mb-2">
+                    <div class="form-check p-3 border rounded-3 h-100">
+                      <input class="form-check-input" type="checkbox" value="necessita de quebra molas" 
+                             id="quebra_molas" name="situacao">
+                      <label class="form-check-label w-100" for="quebra_molas">
+                        <i class="fas fa-exclamation-triangle me-2 text-secondary"></i>
+                        <strong>Necessita de Quebra Molas</strong>
+                        <br><small class="text-muted">Redutores de velocidade</small>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Botão de Envio -->
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg px-5">
+                  <i class="fas fa-paper-plane me-2"></i>
+                  Enviar Solicitação
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card-footer text-center text-muted py-3">
+            <small>
+              <i class="fas fa-phone me-2"></i>
+              Em caso de emergência, entre em contato: (91) XXXX-XXXX
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Validação adicional no frontend
+    document.querySelector('form').addEventListener('submit', function(e) {
+      const checkboxes = document.querySelectorAll('input[name="situacao"]:checked');
+      if (checkboxes.length === 0) {
+        e.preventDefault();
+        alert('Por favor, selecione pelo menos uma situação que necessita de melhoria.');
+        return false;
+      }
+    });
+
+    // Captura de geolocalização
+    const btnGeo = document.getElementById('btnGeo');
+    const coordInput = document.getElementById('coordenadas');
+    const latInput = document.getElementById('lat');
+    const lngInput = document.getElementById('lng');
+
+    if (btnGeo) {
+      btnGeo.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+          alert('Geolocalização não suportada neste dispositivo/navegador.');
+          return;
+        }
+        btnGeo.disabled = true;
+        btnGeo.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Localizando...';
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            const lat = latitude.toFixed(6);
+            const lng = longitude.toFixed(6);
+            coordInput.value = `${lat}, ${lng}`;
+            latInput.value = lat;
+            lngInput.value = lng;
+            btnGeo.disabled = false;
+            btnGeo.innerHTML = '<i class="fas fa-check me-1"></i> Capturar localização';
+          },
+          (err) => {
+            let msg = 'Não foi possível obter a localização.';
+            if (err.code === err.PERMISSION_DENIED) msg = 'Permissão negada para acessar a localização.';
+            if (err.code === err.POSITION_UNAVAILABLE) msg = 'Informação de localização indisponível.';
+            if (err.code === err.TIMEOUT) msg = 'Tempo esgotado ao tentar obter a localização.';
+            alert(msg);
+            btnGeo.disabled = false;
+            btnGeo.innerHTML = '<i class="fas fa-crosshairs me-1"></i> Capturar localização';
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
+      });
+    }
+
+    // Preview da foto
+    const fotoInput = document.getElementById('foto');
+    const previewWrapper = document.getElementById('previewWrapper');
+    const previewImg = document.getElementById('previewImg');
+
+    if (fotoInput) {
+      fotoInput.addEventListener('change', () => {
+        const file = fotoInput.files && fotoInput.files[0];
+        if (!file) {
+          previewWrapper.style.display = 'none';
+          previewImg.src = '';
+          return;
+        }
+        const isImage = file.type.startsWith('image/');
+        const isSizeOk = file.size <= 5 * 1024 * 1024; // 5MB
+        if (!isImage) {
+          alert('Por favor, selecione uma imagem válida.');
+          fotoInput.value = '';
+          previewWrapper.style.display = 'none';
+          return;
+        }
+        if (!isSizeOk) {
+          alert('A imagem excede 5MB. Por favor, selecione uma imagem menor.');
+          fotoInput.value = '';
+          previewWrapper.style.display = 'none';
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImg.src = e.target.result;
+          previewWrapper.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>

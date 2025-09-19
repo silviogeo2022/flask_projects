@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Mapa de Precipitação</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 80vh; }
+        .controls {
+            padding: 10px;
+            background: white;
+        }
+        .legend {
+            background: white;
+            padding: 6px;
+            line-height: 18px;
+            color: #555;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <label>Estado (UF):
+        <select id="uf">
+            <option value="">Todos</option>
+            {% for uf in ufs %}
+                <option value="{{ uf }}">{{ uf }}</option>
+            {% endfor %}
+        </select>
+    </label>
+
+    <label>Data:
+        <select id="data">
+            <option value="">Todas</option>
+            {% for d in datas %}
+                <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+        </select>
+    </label>
+
+    <button onclick="loadData()">Atualizar</button>
+    <button onclick="download()">Download CSV</button>
+</div>
+
+<div id="map"></div>
+
+<div id="grafico" style="width:100%; height:500px;"></div>
+
+<script>
+    const map = L.map('map').setView([-23, -46], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let layer;
+
+    function getColor(precip) {
+        return precip > 100 ? '#800026' :
+               precip > 70  ? '#BD0026' :
+               precip > 50  ? '#E31A1C' :
+               precip > 30  ? '#FC4E2A' :
+               precip > 10  ? '#FD8D3C' :
+                              '#FEB24C';
+    }
+
+    function loadData() {
+        if (layer) {
+            map.removeLayer(layer);
+        }
+
+        const uf = document.getElementById('uf').value;
+        const data = document.getElementById('data').value;
+
+        const url = `/data?uf=${uf}&data=${data}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const municipios = [];
+                const precip = [];
+
+                layer = L.geoJSON(data, {
+                    pointToLayer: function (feature, latlng) {
+                        municipios.push(feature.properties.NM_MUN);
+                        precip.push(parseFloat(feature.properties.precipitation));
+
+                        return L.circleMarker(latlng, {
+                            radius: 8,
+                            fillColor: getColor(parseFloat(feature.properties.precipitation)),
+                            color: "#000",
+                            weight: 1,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        }).bindPopup(
+                            `<b>Município:</b> ${feature.properties.NM_MUN}<br>
+                             <b>Precipitação:</b> ${feature.properties.precipitation} mm<br>
+                             <b>Data:</b> ${feature.properties.date}`
+                        );
+                    }
+                }).addTo(map);
+
+                // Gráfico Plotly
+                const dadosGrafico = [{
+                    x: municipios,
+                    y: precip,
+                    type: 'bar',
+                    marker: {color: 'blue'}
+                }];
+
+                const layout = {
+                    title: 'Precipitação por Município',
+                    xaxis: { title: 'Município' },
+                    yaxis: { title: 'Precipitação (mm)' }
+                };
+
+                Plotly.newPlot('grafico', dadosGrafico, layout);
+            });
+    }
+
+    function download() {
+        const uf = document.getElementById('uf').value;
+        const data = document.getElementById('data').value;
+
+        window.open(`/download?uf=${uf}&data=${data}`, '_blank');
+    }
+
+    loadData();
+
+    // Legenda
+    const legend = L.control({position: 'bottomright'});
+
+    legend.onAdd = function (map) {
+        const div = L.DomUtil.create('div', 'legend');
+        const grades = [0, 10, 30, 50, 70, 100];
+        const labels = [];
+
+        div.innerHTML += '<b>Precipitação (mm)</b><br>';
+
+        for (let i = 0; i < grades.length; i++) {
+            div.innerHTML +=
+                '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+        }
+
+        return div;
+    };
+
+    legend.addTo(map);
+</script>
+
+</body>
+</html>

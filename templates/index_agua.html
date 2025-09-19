@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+  <div class="col-12">
+    <h2>💧 PMSB de Augusto Corrêa - PA: Consumo de Água</h2>
+  </div>
+</div>
+
+{% if error %}
+  <div class="alert alert-danger mt-3">{{ error }}</div>
+{% else %}
+
+<div class="row mt-3">
+  <div class="col-lg-3">
+    <div class="card sticky-sidebar">
+      <div class="card-body">
+        <h5 class="card-title">🔎 Filtros</h5>
+        <form method="get" action="/">
+          <div class="mb-3">
+            <label for="area" class="form-label">Área</label>
+            <select class="form-select" id="area" name="area" onchange="this.form.submit()">
+              {% for a in areas %}
+                <option value="{{ a }}" {% if a == area_selected %}selected{% endif %}>{{ a }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="bairros" class="form-label">Bairro/Comunidade</label>
+            <select class="form-select" id="bairros" name="bairros" multiple size="10">
+              {% for b in bairros_disponiveis %}
+                <option value="{{ b }}" {% if b in bairros_selected %}selected{% endif %}>{{ b }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-note mt-1">Segure Ctrl (Windows) ou ⌘ (Mac) para selecionar múltiplos.</div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+            <a class="btn btn-outline-secondary" href="/">Limpar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-9">
+    <h4 class="section-title">📊 Indicadores Gerais</h4>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="metric-card">
+          <div class="metric-title">Nº Domicílios</div>
+          <div class="metric-value">{{ num_domi }}</div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="metric-card">
+          <div class="metric-title">População Estimada</div>
+          <div class="metric-value">{{ pop_est }}</div>
+        </div>
+      </div>
+    </div>
+
+    <h4 class="section-title">📈 Indicadores de Consumo de Água</h4>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="chart-box">
+          {% if charts.q5 %}{{ charts.q5 | safe }}{% else %}<div class="alert alert-warning">Coluna ausente: LABEL_Q5</div>{% endif %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-box">
+          {% if charts.q6 %}{{ charts.q6 | safe }}{% else %}<div class="alert alert-warning">Coluna ausente: LABEL_Q6</div>{% endif %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-box">
+          {% if charts.q8 %}{{ charts.q8 | safe }}{% else %}<div class="alert alert-warning">Coluna ausente: LABEL_Q8</div>{% endif %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-box">
+          {% if charts.q7 %}{{ charts.q7 | safe }}{% else %}<div class="alert alert-warning">Coluna ausente: LABEL_Q7</div>{% endif %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-box">
+          {% if charts.q9 %}{{ charts.q9 | safe }}{% else %}<div class="alert alert-warning">Coluna ausente: LABEL_Q9</div>{% endif %}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-box">
+          {% if charts.q10 %}{{ charts.q10 | safe }}{% else %}<div class="alert alert-warning">Coluna ausente: LABEL_Q10</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <h4 class="section-title">🗺️ Mapa das Comunidades</h4>
+    <div class="map-box p-2">
+      {% if map_warning %}
+        <div class="alert alert-warning m-2">{{ map_warning }}</div>
+      {% elif map_html %}
+        {{ map_html | safe }}
+      {% else %}
+        <div class="alert alert-secondary m-2">Mapa não disponível.</div>
+      {% endif %}
+    </div>
+
+    <h4 class="section-title">🔧 Sugestões de Melhorias</h4>
+    <div class="card">
+      <div class="card-body">
+        <ul class="mb-0">
+          <li>Ações educativas</li>
+          <li>Cisternas ou caixas d’água coletivas</li>
+          <li>Distribuição de hipoclorito de sódio</li>
+          <li>Sistemas de tratamento doméstico</li>
+          <li>Melhoria no acesso à rede pública</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{% endblock %}

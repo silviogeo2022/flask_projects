@@ -1,0 +1,3 @@
+ativar o venv flask
+
+.venv\Scripts\Activate.ps1
