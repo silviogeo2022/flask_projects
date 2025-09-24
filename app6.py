@@ -11,7 +11,7 @@ from sqlalchemy.sql import quoted_name, func
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key')
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY') or secrets.token_hex(32)
 
 # ============ Config do Banco ============
 DB_SCHEMA = os.getenv('DB_SCHEMA', 'urbano')
@@ -210,3 +210,4 @@ if os.getenv('RUN_DB_BOOTSTRAP') == '1':
 # Execução local (dev). Em produção use Gunicorn.
 if __name__ == '__main__':
     app.run(debug=True)
+
