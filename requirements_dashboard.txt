@@ -1,0 +1,12 @@
+# Servidor web
+Flask>=3.0.0
+gunicorn>=21.2.0
+
+# Banco de dados
+SQLAlchemy>=2.0.0
+psycopg2-binary>=2.9.9
+
+# Dados e mapa
+pandas>=2.2.0
+folium>=0.16.0
+# (folium já puxa branca e jinja2 como dependências)
