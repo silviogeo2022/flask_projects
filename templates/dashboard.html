@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel de Monitoramento de Ruas - Mãe do Rio - PA</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    :root{
+      /* Cores aproximadas ao formulário (azul -> roxo) */
+      --brand-start:#1f6feb;   /* azul */
+      --brand-mid:#1363df;     /* azul intenso */
+      --brand-end:#6f42c1;     /* roxo */
+      --surface:#ffffff;
+      --border:#e5e7eb;
+      --muted:#6b7280;
+    }
+
+    html, body{ height:100%; }
+    body{
+      background: linear-gradient(180deg, rgba(31,111,235,0.20) 0%, rgba(111,66,193,0.20) 100%);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Header com gradiente e logo */
+    header.page-header{
+      position: sticky; top:0; z-index:1030; color:#fff;
+      background: linear-gradient(90deg, var(--brand-start) 0%, var(--brand-mid) 45%, var(--brand-end) 100%);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+    }
+    .header-inner{
+      display:flex; align-items:center; justify-content:center;
+      gap:14px; min-height:76px;
+    }
+    .header-title{
+      margin:0; font-weight:700; letter-spacing:.2px; text-align:center;
+    }
+    .header-logo{
+      height:56px; width:auto; display:block;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,.15));
+    }
+
+    /* Layout */
+    .layout{ display:flex; min-height: calc(100vh - 76px); }
+    .sidebar{
+      width:320px; background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(3px);
+      border-right:1px solid var(--border);
+      padding:16px; overflow-y:auto;
+    }
+    .content{ flex:1; display:flex; flex-direction:column; }
+
+    /* Cartão KPI */
+    .kpi{
+      background: var(--surface);
+      border:1px solid var(--border);
+      border-radius:12px; padding:18px; margin:16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .kpi .value{ font-size:40px; font-weight:700; line-height:1; }
+    .map-container{ flex:1; margin:0 16px 16px 16px; }
+
+    /* Pílulas de situação */
+    .pill{
+      display:inline-block; padding:4px 10px; border-radius:999px;
+      background:#f1f5f9; border:1px solid #e2e8f0; font-size:12px; margin:2px;
+    }
+
+    /* Botões no tom do tema */
+    .btn-primary{
+      background: linear-gradient(90deg, var(--brand-start), var(--brand-end));
+      border:none;
+    }
+    .btn-primary:hover{ filter:brightness(0.95); }
+    .btn-light.btn-clear{ color: var(--muted); }
+  </style>
+</head>
+<body>
+  <!-- Título com logo -->
+  <header class="page-header">
+    <div class="container-fluid">
+      <div class="header-inner">
+        <img class="header-logo" src="{{ url_for('static', filename='img/logo-prefeitura.png') }}" alt="Prefeitura de Mãe do Rio - PA" />
+        <h3 class="header-title">Painel de Monitoramento de Ruas - Mãe do Rio - PA</h3>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h5 class="mb-3">Filtros</h5>
+      <form method="get" id="filtersForm">
+        <!-- Bairro -->
+        <div class="mb-3">
+          <label class="form-label">Bairro</label>
+          <select name="bairro" class="form-select" onchange="autoSubmit()">
+            <option value="">Todos</option>
+            {% for b in bairros %}
+              <option value="{{ b }}" {% if selected_bairro == b %}selected{% endif %}>{{ b }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <!-- Rua -->
+        <div class="mb-3">
+          <label class="form-label">Rua</label>
+          <select name="rua" class="form-select" onchange="autoSubmit()">
+            <option value="">Todas</option>
+            {% for r in ruas %}
+              <option value="{{ r }}" {% if selected_rua == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <!-- Situação -->
+        <div class="mb-3">
+          <label class="form-label">Situação</label>
+          <select name="situacao" class="form-select" onchange="autoSubmit()">
+            <option value="">Todas</option>
+            {% for s in situacoes %}
+              <option value="{{ s }}" {% if selected_situacao == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <hr class="my-3" />
+
+        <!-- Basemap -->
+        <div class="mb-3">
+          <label class="form-label">Mapa base</label>
+          <select name="basemap" class="form-select" onchange="autoSubmit()">
+            <option value="osm" {% if basemap == 'osm' %}selected{% endif %}>Padrão (OSM)</option>
+            <option value="positron" {% if basemap == 'positron' %}selected{% endif %}>Claro (Positron)</option>
+            <option value="satellite" {% if basemap == 'satellite' %}selected{% endif %}>Satélite (Esri)</option>
+          </select>
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary w-100">Aplicar</button>
+          <a href="/" class="btn btn-light w-100 btn-clear">Limpar</a>
+        </div>
+      </form>
+    </aside>
+
+    <main class="content">
+      <!-- Indicadores -->
+      <div class="kpi">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <div class="text-muted">Registros encontrados</div>
+            <div class="value" id="totalRegistros">{{ stats.total_registros or 0 }}</div>
+            <div class="text-muted mt-2" style="font-size: 0.95rem;">
+              {{ stats.indicador_texto }}
+            </div>
+          </div>
+          <div class="text-end small text-muted">
+            {% if selected_bairro %}<div>Bairro: <b>{{ selected_bairro }}</b></div>{% endif %}
+            {% if selected_rua %}<div>Rua: <b>{{ selected_rua }}</b></div>{% endif %}
+            {% if selected_situacao %}<div>Situação: <b>{{ selected_situacao }}</b></div>{% endif %}
+          </div>
+        </div>
+
+        {% if stats.por_situacao and not selected_situacao %}
+          <div class="mt-3">
+            <div class="text-muted mb-1">Distribuição por situação</div>
+            {% for nome, qtd in stats.por_situacao.items() %}
+              <span class="pill">{{ nome }}: {{ qtd }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Mapa -->
+      <div class="map-container">
+        {{ map_html|safe }}
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function autoSubmit(){ document.getElementById('filtersForm').submit(); }
+  </script>
+</body>
+</html>
